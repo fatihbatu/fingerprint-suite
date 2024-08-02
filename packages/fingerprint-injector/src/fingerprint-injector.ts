@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 import { BrowserFingerprintWithHeaders, Fingerprint, FingerprintGenerator, FingerprintGeneratorOptions } from 'fingerprint-generator';
 import { BrowserContext, Browser as PWBrowser, BrowserContextOptions } from 'playwright';
-import { Page, Browser as PPBrowser } from 'puppeteer';
+import { Page, Browser as PPBrowser, Context as PPContext } from 'puppeteer';
 
 interface EnhancedFingerprint extends Fingerprint {
     userAgent: string;
@@ -324,6 +324,24 @@ export async function newInjectedPage(
     const fingerprintWithHeaders = options?.fingerprint ?? generator.getFingerprint(options?.fingerprintOptions ?? {});
 
     const page = await browser.newPage();
+
+    const injector = new FingerprintInjector();
+    await injector.attachFingerprintToPuppeteer(page, fingerprintWithHeaders);
+
+    return page;
+}
+
+export async function newInjectedContextPage(
+    context: PPContext,
+    options? : {
+        fingerprint?: BrowserFingerprintWithHeaders;
+        fingerprintOptions?: Partial<FingerprintGeneratorOptions>;
+    },
+): Promise<Page> {
+    const generator = new FingerprintGenerator();
+    const fingerprintWithHeaders = options?.fingerprint ?? generator.getFingerprint(options?.fingerprintOptions ?? {});
+
+    const page = await context.newPage();
 
     const injector = new FingerprintInjector();
     await injector.attachFingerprintToPuppeteer(page, fingerprintWithHeaders);
